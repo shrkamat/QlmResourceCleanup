@@ -1,0 +1,82 @@
+qmake --version
+QMake version 3.0
+Using Qt version 5.4.2
+mkdir -p build && qmake -o build/Makefile && make -C build
+
+cd build
+ulimit -c unlimited
+./QmlResourceCleanup 
+Segmentation fault (core dumped)
+
+gdb QmlResourceCleanup core
+
+(gdb) info thread
+  Id   Target Id         Frame 
+* 1    Thread 0x7f204cdf7740 (LWP 24325) 0x00007f204bc47cf4 in QBasicAtomicOps<8>::testAndSetRelaxed<QMutexData*> (_q_value=@0x48: <error reading variable>, expectedValue=0x0, newValue=0x1, 
+    currentValue=0x7ffe453fa360)
+    at ../../include/QtCore/../../src/corelib/arch/qatomic_x86.h:259
+  2    Thread 0x7f2043b61700 (LWP 24326) 0x00007f204b33870d in poll ()
+    at ../sysdeps/unix/syscall-template.S:84
+(gdb) thread apply all bt
+
+Thread 2 (Thread 0x7f2043b61700 (LWP 24326)):
+#0  0x00007f204b33870d in poll () at ../sysdeps/unix/syscall-template.S:84
+#1  0x00007f20470a5c62 in ?? () from /usr/lib/x86_64-linux-gnu/libxcb.so.1
+#2  0x00007f20470a78d7 in xcb_wait_for_event () from /usr/lib/x86_64-linux-gnu/libxcb.so.1
+#3  0x00007f2044737726 in QXcbEventReader::run (this=0x12ca5d0) at qxcbconnection.cpp:1105
+#4  0x00007f204bc52d08 in QThreadPrivate::start (arg=0x12ca5d0) at thread/qthread_unix.cpp:337
+#5  0x00007f204a6ce6ba in start_thread (arg=0x7f2043b61700) at pthread_create.c:333
+#6  0x00007f204b3443dd in clone () at ../sysdeps/unix/sysv/linux/x86_64/clone.S:109
+
+Thread 1 (Thread 0x7f204cdf7740 (LWP 24325)):
+#0  0x00007f204bc47cf4 in QBasicAtomicOps<8>::testAndSetRelaxed<QMutexData*> (
+    _q_value=@0x48: <error reading variable>, expectedValue=0x0, newValue=0x1, 
+    currentValue=0x7ffe453fa360)
+    at ../../include/QtCore/../../src/corelib/arch/qatomic_x86.h:259
+#1  0x00007f204bc47af0 in QGenericAtomicOps<QBasicAtomicOps<8> >::testAndSetAcquire<QMutexData*, QMutexData*> (currentValue=0x7ffe453fa360, newValue=0x1, expectedValue=0x0, 
+    _q_value=@0x48: <error reading variable>)
+    at ../../include/QtCore/../../src/corelib/thread/qgenericatomic.h:166
+#2  QBasicAtomicPointer<QMutexData>::testAndSetAcquire (this=0x48, expectedValue=0x0, 
+    newValue=0x1, currentValue=@0x7ffe453fa360: 0x7ffe453fa390)
+    at ../../include/QtCore/../../src/corelib/thread/qbasicatomic.h:270
+#3  0x00007f204bc477ab in QBasicMutex::fastTryLock (this=0x48, 
+    current=@0x7ffe453fa360: 0x7ffe453fa390) at thread/qmutex.h:82
+#4  0x00007f204bc46fa4 in QMutex::lock (this=0x48) at thread/qmutex.cpp:212
+#5  0x00007f204be8efd9 in QCoreApplication::postEvent (receiver=0x12fd0e0, event=0x1547610, 
+    priority=0) at kernel/qcoreapplication.cpp:1305
+#6  0x00007f204bed0fe2 in QObject::deleteLater (this=0x12fd0e0) at kernel/qobject.cpp:2125
+#7  0x0000000000401c24 in qCleanupResources_qml () at qrc_qml.cpp:81
+#8  0x00007f204becf1c7 in QObject::event (this=0x1518740, e=0x7ffe453fa760)
+    at kernel/qobject.cpp:1226
+#9  0x00007f204be8ea82 in QCoreApplicationPrivate::notify_helper (this=0x12bfec0, 
+    receiver=0x1518740, event=0x7ffe453fa760) at kernel/qcoreapplication.cpp:1052
+#10 0x00007f204be8e709 in QCoreApplication::notify (this=0x7ffe453fab00, receiver=0x1518740, 
+    event=0x7ffe453fa760) at kernel/qcoreapplication.cpp:997
+#11 0x00007f204c27bb52 in QGuiApplication::notify (this=0x7ffe453fab00, object=0x1518740, 
+    event=0x7ffe453fa760) at kernel/qguiapplication.cpp:1528
+#12 0x00007f204be8e5f1 in QCoreApplication::notifyInternal (this=0x7ffe453fab00, 
+    receiver=0x1518740, event=0x7ffe453fa760) at kernel/qcoreapplication.cpp:935
+#13 0x00007f204be92563 in QCoreApplication::sendEvent (receiver=0x1518740, 
+    event=0x7ffe453fa760)
+    at ../../include/QtCore/../../src/corelib/kernel/qcoreapplication.h:228
+#14 0x00007f204bf0f49f in QTimerInfoList::activateTimers (this=0x12e8710)
+    at kernel/qtimerinfo_unix.cpp:635
+#15 0x00007f204bf109aa in timerSourceDispatch (source=0x12e86b0)
+    at kernel/qeventdispatcher_glib.cpp:177
+#16 0x00007f20490ed197 in g_main_context_dispatch ()
+   from /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#17 0x00007f20490ed3f0 in ?? () from /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#18 0x00007f20490ed49c in g_main_context_iteration ()
+   from /lib/x86_64-linux-gnu/libglib-2.0.so.0
+#19 0x00007f204bf113c4 in QEventDispatcherGlib::processEvents (this=0x12e8510, flags=...)
+    at kernel/qeventdispatcher_glib.cpp:418
+#20 0x00007f20447c4372 in QPAEventDispatcherGlib::processEvents (this=0x12e8510, flags=...)
+    at eventdispatchers/qeventdispatcher_glib.cpp:115
+#21 0x00007f204be8af4a in QEventLoop::processEvents (this=0x7ffe453faa50, flags=...)
+---Type <return> to continue, or q <return> to quit---
+    at kernel/qeventloop.cpp:128
+#22 0x00007f204be8b279 in QEventLoop::exec (this=0x7ffe453faa50, flags=...)
+    at kernel/qeventloop.cpp:204
+#23 0x00007f204be8ed7d in QCoreApplication::exec () at kernel/qcoreapplication.cpp:1188
+#24 0x00007f204c27ba7a in QGuiApplication::exec () at kernel/qguiapplication.cpp:1507
+#25 0x00000000004016f3 in main (argc=1, argv=0x7ffe453fac38) at ../main.cpp:9
