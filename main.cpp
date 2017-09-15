@@ -10,7 +10,7 @@ public:
     explicit VDestroyer(QQuickView *view, QObject *parent = 0) :
         QObject(parent), m_view(view)
     {
-        // destroy m_view in 3 secs
+        // destroy m_view in 5 secs
         timerId = startTimer(5 * 1000);
     }
 
@@ -30,6 +30,8 @@ private :
 int main(int argc, char *argv[])
 {
     QGuiApplication app(argc, argv);
+
+    qDebug() << "Hello, World";
 
     app.setQuitOnLastWindowClosed(false);
 
